@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.fanye.attend.dao.AttendMapper">
+  <resultMap id="BaseResultMap" type="org.fanye.attend.entity.Attend">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="user_id" jdbcType="BIGINT" property="userId" />
+    <result column="attend_date" jdbcType="DATE" property="attendDate" />
+    <result column="attend_week" jdbcType="TINYINT" property="attendWeek" />
+    <result column="attend_morning" jdbcType="TIME" property="attendMorning" />
+    <result column="attend_evening" jdbcType="TIME" property="attendEvening" />
+    <result column="absence" jdbcType="INTEGER" property="absence" />
+    <result column="attend_state" jdbcType="TINYINT" property="attendState" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, user_id, attend_date, attend_week, attend_morning, attend_evening, absence, attend_state
+  </sql>
+  <select id="selectTodayAbsence" resultType="Long"  >
+   SELECT
+	u.id
+    FROM `user` u
+    WHERE u.id NOT IN (
+		SELECT
+			a.user_id
+		FROM attend a
+		WHERE a.attend_date = CURDATE()
+	)
+  </select>
+  <select id="selectTodayEveningAbsence" resultMap="BaseResultMap"  >
+    select
+    <include refid="Base_Column_List" />
+    from attend
+    where
+    attend_date= CURDATE()
+    AND attend_evening IS NULL
+    AND attend_state =1
+    AND attend_week NOT IN (6,7)
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from attend
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <select id="countByCondition" resultType="int">
+	  select count(0) from attend where user_id = #{userId} 
+	  <if test="startDate != null and endDate != null"> AND attend_date BETWEEN #{startDate} AND #{endDate} </if>
+	  <if test="attendStatus != null"> AND attend_status = #{attendStatus} </if>
+  </select>
+  <select id="selectAttendPage" resultMap="BaseResultMap">
+	select 
+	<include refid="Base_Column_List"/>
+	from attend where user_id = #{userId} 
+	<if test="startDate !=null and endDate !=null"> AND attend_date BETWEEN #{startDate} AND #{endDate} </if>
+	<if test="attendStatus != null"> AND attend_status = #{attendStatus} </if>
+	LIMIT #{startRow} , #{pageSize} 
+  </select>
+  <select id="selectTodaySignRecord" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from attend
+    where user_id = #{userId}
+     and attend_date=CURDATE()
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from attend
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <insert id="batchInsert" parameterType="list" >
+    insert into attend (user_id, attend_date,
+      attend_week, absence, attend_state)
+    values
+    <foreach collection="list" item="item" index="index" separator="," >
+      (#{item.userId}, #{item.attendDate},#{item.attendWeek}, #{item.absence},#{item.attendState})
+    </foreach>
+  </insert>
+  <insert id="insert" parameterType="org.fanye.attend.entity.Attend">
+    insert into attend (id, user_id, attend_date, 
+      attend_week, attend_morning, attend_evening, 
+      absence, attend_state)
+    values (#{id,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{attendDate,jdbcType=DATE}, 
+      #{attendWeek,jdbcType=TINYINT}, #{attendMorning,jdbcType=TIME}, #{attendEvening,jdbcType=TIME}, 
+      #{absence,jdbcType=INTEGER}, #{attendState,jdbcType=TINYINT})
+  </insert>
+  <insert id="insertSelective" parameterType="org.fanye.attend.entity.Attend">
+    insert into attend
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="userId != null">
+        user_id,
+      </if>
+      <if test="attendDate != null">
+        attend_date,
+      </if>
+      <if test="attendWeek != null">
+        attend_week,
+      </if>
+      <if test="attendMorning != null">
+        attend_morning,
+      </if>
+      <if test="attendEvening != null">
+        attend_evening,
+      </if>
+      <if test="absence != null">
+        absence,
+      </if>
+      <if test="attendState != null">
+        attend_state,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="userId != null">
+        #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="attendDate != null">
+        #{attendDate,jdbcType=DATE},
+      </if>
+      <if test="attendWeek != null">
+        #{attendWeek,jdbcType=TINYINT},
+      </if>
+      <if test="attendMorning != null">
+        #{attendMorning,jdbcType=TIME},
+      </if>
+      <if test="attendEvening != null">
+        #{attendEvening,jdbcType=TIME},
+      </if>
+      <if test="absence != null">
+        #{absence,jdbcType=INTEGER},
+      </if>
+      <if test="attendState != null">
+        #{attendState,jdbcType=TINYINT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="org.fanye.attend.entity.Attend">
+    update attend
+    <set>
+      <if test="userId != null">
+        user_id = #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="attendDate != null">
+        attend_date = #{attendDate,jdbcType=DATE},
+      </if>
+      <if test="attendWeek != null">
+        attend_week = #{attendWeek,jdbcType=TINYINT},
+      </if>
+      <if test="attendMorning != null">
+        attend_morning = #{attendMorning,jdbcType=TIME},
+      </if>
+      <if test="attendEvening != null">
+        attend_evening = #{attendEvening,jdbcType=TIME},
+      </if>
+      <if test="absence != null">
+        absence = #{absence,jdbcType=INTEGER},
+      </if>
+      <if test="attendState != null">
+        attend_state = #{attendState,jdbcType=TINYINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="org.fanye.attend.entity.Attend">
+    update attend
+    set user_id = #{userId,jdbcType=BIGINT},
+      attend_date = #{attendDate,jdbcType=DATE},
+      attend_week = #{attendWeek,jdbcType=TINYINT},
+      attend_morning = #{attendMorning,jdbcType=TIME},
+      attend_evening = #{attendEvening,jdbcType=TIME},
+      absence = #{absence,jdbcType=INTEGER},
+      attend_state = #{attendState,jdbcType=TINYINT}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>
